@@ -36,5 +36,117 @@
 ### 軟體資源
 - MCUXpresso IDE
 - GUI Guider
+- Google Colab
 - [Corn Crop Growth 資料集](https://www.kaggle.com/datasets/miguelh65/corn-crop-growth)
 - RandomForestRegressor 機器學習演算法
+
+## 技術細節
+
+### 隨機森林模型
+
+- 使用 `pandas` 讀取資料集並且進行特徵選取
+```python
+import pandas as pd
+
+file_path = '/content/crop_growth_dataset.csv'
+data = pd.read_csv(file_path) # 讀取資料集
+
+X = data[['Temperature', 'Humidity', 'Soil_Moisture']]  # 環境特徵
+y = data['Growth']  # 目標變量
+
+# 分割資料集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+```
+
+- 使用 `RandomForestRegressor` 訓練模型
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 訓練模型
+rf_model = RandomForestRegressor(n_estimators=120, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# 在測試集上進行預測
+y_pred = rf_model.predict(X_test)
+
+# 評估模型表現
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"均方誤差 (MSE): {mse}")
+print(f"R² 決定係數: {r2}")
+```
+
+- 將模型轉為 C 程式碼，用以導入至開發版
+```python
+import m2cgen as m2c
+
+c_code = m2c.export_to_c(rf_model)
+
+with open("random_forest_model.c", "w") as file:
+    file.write(c_code)
+```
+
+- 將 C 程式碼中的 `score` 函式改寫為輸出百分格式
+```c
+double score(double *input) {
+    // ... 原始程式碼
+    // predict_height 為預測生長高度
+    double min_height = 36.97; // 資料集中最小生長高度
+    double max_height = 136.31; // 資料集中最大生長高度
+    double predict_score = 30 + 70 * (predict_height - min_height) / (max_height - min_height); // 基本分 30 分用以避免分數落差過大
+    double output_score = min(predict_score, 99.9);
+    return output_score;
+}
+```
+
+- 新增 `suggest` 函式，對當前環境條件進行判斷，給出調整建議。分為 6 種情境進行判斷，分別為「當前溫度降低 5 %」、「當前溫度提升 5 %」、「當前濕度降低 5 %」、「當前濕度提升 5 %」、「當前土壤濕度降低 5 %」與「當前土壤濕度提升 5 %」。函式輸出以下值分別代表不同涵義：
+  - 輸出 `0`：當前分數高於 80 分不需調整，或 6 種調整情境皆無法提高分數
+  - 輸出 `1`：建議降低溫度
+  - 輸出 `2`：建議提升溫度
+  - 輸出 `3`：建議降低溫度
+  - 輸出 `4`：建議提升濕度
+  - 輸出 `5`：建議降低土壤濕度
+  - 輸出 `6`：建議提升土壤濕度
+```c
+int suggest(double *input)
+{
+    double x = input[0], y = input[1], z = input[2];
+
+    double temp_range = 35 - 10;
+    double humidity_range = 90 - 30;
+    double soilmoisture_range = 40 - 10;
+    double ratio = 0.05;
+
+    double suggestion_features[6][3] = {
+        {x - temp_range * ratio, y, z},
+        {x + temp_range * ratio, y, z},
+        {x, y - humidity_range * ratio, z},
+        {x, y + humidity_range * ratio, z},
+        {x, y, z - soilmoisture_range * ratio},
+        {x, y, z + soilmoisture_range * ratio}};
+
+    int suggestion = 0;
+    double suggestion_score = 0;
+    double orig_score = score(input);
+
+    if (orig_score >= 80)
+    {
+        return 0;
+    }
+
+    for (int i = 1; i <= 6; i++)
+    {
+        double cur_score = score(suggestion_features[i - 1]);
+        if (cur_score > suggestion_score)
+        {
+            suggestion_score = cur_score;
+            suggestion = i;
+        }
+    }
+
+    return (suggestion_score > orig_score ? suggestion : 0);
+}
+```
