@@ -42,8 +42,64 @@
 
 ## 技術細節
 
-### 網頁視覺化設計
+### 使用 Wi-Fi 連接至網頁視覺化設計
 將網頁所使用到的 UI 介面，透過程式轉為 C 程式碼後存放於開發版中，並透過 IW416 Wi-Fi 模組連網後開啟網頁，即可在相同網域下透過手機連線至開發板。
+
+- 啟動 Wi-Fi 掃描並提示輸入網路名稱密碼
+```c
+PRINTF("[i] Starting Wi-Fi scan...\r\n");
+char *ssids = WPL_Scan(); // 進行 Wi-Fi 網路的掃描，並返回可用的 SSID
+
+PRINTF("[i] Please enter the SSID of the network you want to connect to: ");
+fflush(stdout);  // 強制刷新，確保輸出即時顯示
+char user_ssid[WPL_WIFI_SSID_LENGTH] = {0};
+scanf("%s", user_ssid);  // 等待使用者輸入 SSID 並將其儲存
+
+PRINTF("\n[i] Please enter the password for the network: ");
+fflush(stdout);  // 強制刷新，確保輸出即時顯示
+char user_password[WPL_WIFI_PASSWORD_LENGTH] = {0};
+scanf("%s", user_password);  // 等待使用者輸入密碼並將其儲存
+```
+- 嘗試連接至指定的 Wi-Fi 網路
+```c
+PRINTF("\n[i] Attempting to connect to SSID: %s\r\n", user_ssid);
+PRINTF("\n[i] Attempting to connect to password: %s\r\n", user_password);
+fflush(stdout);  // 強制刷新，確保輸出即時顯示
+result = WPL_AddNetworkWithSecurity(user_ssid, user_password, WIFI_NETWORK_LABEL, WPL_SECURITY_WPA2); // 將 Wi-Fi 網路添加到開發板的網路列表，並設置 WPA2 安全協定
+```
+- 檢查是否成功加入網路
+```c
+if (result == WPLRET_SUCCESS) // 檢查Wi-Fi網路是否成功添加
+{
+    result = WPL_Join(WIFI_NETWORK_LABEL);
+    if (result == WPLRET_SUCCESS)
+    {
+        g_BoardState.wifiState = WIFI_STATE_CLIENT;
+        g_BoardState.connected = true;
+        PRINTF("[i] Successfully connected to SSID: %s\r\n", user_ssid);
+        char ip[32];
+        WPL_GetIP(ip, 1); // 獲取當前連接網路的 IP 地址
+        PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip);
+    }
+    else
+    {
+        PRINTF("[!] Failed to join SSID: %s\r\n", user_ssid);
+    }
+}
+else
+{
+    PRINTF("[!] Failed to add network SSID: %s\r\n", user_ssid);
+}
+```
+- 啟動 Web 伺服器
+```c
+if (xTaskCreate(http_srv_task, "http_srv_task", HTTPD_STACKSIZE, NULL, HTTPD_PRIORITY, NULL) != pdPASS) // 啟動 HTTP 伺服器的任務
+{
+    PRINTF("[!] HTTPD Task creation failed.");
+    while (1)
+        __BKPT(0);
+}
+```
 
 ### GUI Guider
 
