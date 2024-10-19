@@ -22,3 +22,19 @@
     1. 將環境感測器放置適當的位置以監測環境數據
     2. 將環境感測器連接至 i.MX RT1060EVK 開發板，並且連接至電腦開啟程式
     3. 開啟網頁查看視覺化數據，並且依據 AI 建議改善當前環境條件
+
+## 使用資源
+
+### 硬體資源
+
+- i.MX RT1060EVK 開發版
+- IW416 Wi-Fi 模組
+- LCD Panel
+- DHT11 溫濕度傳感器模組
+- YL-69 土壤濕度感測器
+
+### 軟體資源
+- MCUXpresso IDE
+- GUI Guider
+- [Corn Crop Growth 資料集](https://www.kaggle.com/datasets/miguelh65/corn-crop-growth)
+- RandomForestRegressor 機器學習演算法
