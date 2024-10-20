@@ -357,7 +357,7 @@ int suggest(double *input)
 - **將 AI 模型導入至開發板：**<br>
 原先我們的計畫為使用 TensorFlow 訓練神經網路模型進行預測，然後將已訓練模型使用 TensorFlow Lite Micro 應用於開發板上。然而目前 TensorFlow Lite Micro 在網路上的資源有限，在導入過程中遇到許多不明錯誤且難以解決。
     - **解決方法：**<br>
-    改用隨機森林演算法訓練 AI 模型，並且使用 `m2cgen` 套件將模型傳換為 C 程式碼。
+    改用隨機森林演算法訓練 AI 模型，並且使用 `m2cgen` 套件將模型轉換為 C 程式碼。
 
 ## 成果展示
 - [Google 簡報]()
