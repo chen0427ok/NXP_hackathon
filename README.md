@@ -311,6 +311,8 @@ int suggest(double *input)
 ## 開發過程
 
 ### 遇到的困難
+- **DHT11的訊號讀取問題：**<br>
+與一般的sensor不同，DHT11為單線雙向通訊的感測器，且讀取資料的方式對時脈十分嚴格，首先須對該腳位輸出低電位18ms、高電位40us、之後轉為輸入，等待DHT11的等待訊號結束才開始讀取，DHT11的資料以透過高電位的長短決定為1或0，70us為1，26us為0，因此我們需要精度能達到微秒的timer來讀取數據，最開始嘗試的是FreeRTOS的Taskdelay，但若要處理微秒尺度則需改變系統的tick，會導致後續task效率低落因此淘汰；再來是SystemTick，SystemTick能確實讀取也較為簡單，但在後續結合GUIguider或wifi卻發現Task跟SystemTick會互相影響而出錯，最後採用的是最原始的方式NOP()，NOP()所具有的問題則是實際的ClockCycle與計算理想值不同，需要利用其他方式測量並經過調整才能符合需求。
 
 - **將 AI 模型導入至開發板：**<br>
 原先我們的計畫為使用 TensorFlow 訓練神經網路模型進行預測，然後將已訓練模型使用 TensorFlow Lite Micro 應用於開發板上。然而目前 TensorFlow Lite Micro 在網路上的資源有限，在導入過程中遇到許多不明錯誤且難以解決。
