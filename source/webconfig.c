@@ -816,26 +816,6 @@ int main(void)
 	    	PRINTF("init3\n");
 	    	GPIO_PinInit(DHT11_GPIO, DHT11_GPIO_PIN, &USER_DHT_out_config);
 	    	PRINTF("init4\n");
-//	    	SysTick_DelayTicks(2000000U);
-
-//			GPIO_PinWrite(DHT11_GPIO,DHT11_GPIO_PIN,0);
-//			SysTick_DelayTicks(18015U);
-//			GPIO_PinWrite(DHT11_GPIO,DHT11_GPIO_PIN,1);
-//			SysTick_DelayTicks(35U);
-//
-//			GPIO_PinInit(DHT11_GPIO, DHT11_GPIO_PIN, &USER_DHT_in_config);
-//			SysTick_DelayTicks(160U);
-//			uint8_t data[5] = {0};
-//			for(int i = 0; i < 5; i++)
-//			{
-//				for(int j = 7; j >= 0; j--)
-//				{
-//					data[i] |= (read_data_bit() << j);
-//				}
-//			 }
-//			PRINTF("%d, %d\n",data[0],data[2]);
-
-
 	    }
 	    PRINTF("init5\n");
 	//---------------------------------
