@@ -182,6 +182,44 @@ if (xTaskCreate(http_srv_task, "http_srv_task", HTTPD_STACKSIZE, NULL, HTTPD_PRI
 
 ### GUI Guider
 
+初始化和控制 LCD 螢幕顯示是利用 LVGL（Light and Versatile Graphics Library）來管理 UI 和顯示更新。以下程式用以負責初始化 LVGL、顯示器、輸入設備以及用戶界面，並進行任務處理。
+
+- 在 LVGL 庫啟用日誌功能（`LV_USE_LOG`）的情況下，註冊一個日誌輸出的回調函數 `print_cb`，並且註冊閒置時間回調函數
+```c
+#if LV_USE_LOG
+    lv_log_register_print_cb(print_cb);
+#endif
+
+lv_timer_register_get_idle_cb(get_idle_time_cb); // 用來取得系統的閒置時間
+lv_timer_register_reset_idle_cb(reset_idle_time_cb); // 重置閒置計時器
+```
+- 進行初始化設定
+```c
+lv_port_pre_init(); // 用來進行 LVGL 的前置初始化
+lv_init(); // 初始化 LVGL 的核心系統
+lv_port_disp_init(); // 初始化顯示驅動
+lv_port_indev_init(); // 初始化輸入設備
+
+s_lvgl_initialized = true;
+setup_ui(&guider_ui); // 設定 UI 的布局和元素
+events_init(&guider_ui); // 初始化 UI 元素的事件處理
+custom_init(&guider_ui); // 根據應用需求進行自定義初始化
+
+#if LV_USE_VIDEO
+    Video_InitPXP(); // 初始化 PXP
+#endif
+```
+
+- 無限迴圈處理任務
+```c
+for (;;)
+{
+    lv_task_handler(); // 處理所有的 LVGL 相關任務
+    vTaskDelay(1); // 延遲 1 個作業系統時脈
+    vTaskSuspend(NULL); // 暫停當前任務，直到再次被喚醒
+}
+```
+
 ### 隨機森林模型
 
 - 使用 `pandas` 讀取資料集並且進行特徵選取，並且以 8:2 比例分割訓練集與測試集
