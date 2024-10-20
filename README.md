@@ -54,7 +54,6 @@ static void delayms(int ms)
     {
     	__NOP(); // 創建延遲
     }
-
 }
 
 static void delayus(int us)
@@ -64,7 +63,6 @@ static void delayus(int us)
     {
     	__NOP(); // 創建延遲
     }
-
 }
 ```
 
@@ -119,7 +117,7 @@ for(int i = 0; i < 5; i++)
     }
 }
 
-PRINTF("%d, %d\r\n",data[0],data[2]);
+PRINTF("%d, %d\r\n", data[0], data[2]);
 ```
 
 ### 使用 Wi-Fi 連接至網頁視覺化設計
