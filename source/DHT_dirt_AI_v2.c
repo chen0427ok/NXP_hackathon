@@ -202,14 +202,4 @@ void ADC_Configuration(void)
     adcChannelConfigStruct.channelNumber = DEMO_ADC_USER_CHANNEL; /* External channel selection from ADC_ETC. */
     adcChannelConfigStruct.enableInterruptOnConversionCompleted = false;
     ADC_SetChannelConfig(DEMO_ADC_BASE, DEMO_ADC_CHANNEL_GROUP, &adcChannelConfigStruct);
-
-    /* Do auto hardware calibration. */
-    if (kStatus_Success == ADC_DoAutoCalibration(DEMO_ADC_BASE))
-    {
-        //PRINTF("ADC_DoAutoCalibration() Done.\r\n");
-    }
-    else
-    {
-        //PRINTF("ADC_DoAutoCalibration() Failed.\r\n");
-    }
 }
