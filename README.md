@@ -45,6 +45,83 @@
 
 ### 讀取感測器數據
 
+- 在 DHT11 進行通訊時特定的時間協議非常重要，這裡使用 `delayms` 和 `delayus` 完成毫秒和微秒級的延遲。
+```c
+static void delayms(int ms)
+{
+    volatile uint32_t i = 0;
+    for (i = 0; i < ms*70000; ++i)
+    {
+    	__NOP(); // 創建延遲
+    }
+
+}
+
+static void delayus(int us)
+{
+    volatile uint32_t i = 0;
+    for (i = 0; i < us*70; ++i)
+    {
+    	__NOP(); // 創建延遲
+    }
+
+}
+```
+
+- `read_data_bit` 函數用來從 DHT11 感測器讀取單個位元。DHT11 在傳送數據時，會透過高低電壓的持續時間來表示位元。此函數首先等待電壓變高，接著延遲 35 微秒，然後檢查信號線是否仍然為高電壓來判定這一位是 1 還是 0。
+```c
+uint8_t read_data_bit(void)
+{
+    uint8_t bit = 0;
+    while(GPIO_PinRead(DHT11_GPIO, DHT11_GPIO_PIN) == 0); // 等待電壓變高
+    delayus(35);  // 等待 35 微秒
+    if(GPIO_PinRead(DHT11_GPIO, DHT11_GPIO_PIN) == 1)  // 如果電壓仍為高則為該位元為 1
+    {
+        bit = 1;
+    }
+    while(GPIO_PinRead(DHT11_GPIO, DHT11_GPIO_PIN) == 1); // 等待電壓變低
+    return bit;
+}
+```
+
+- 宣告兩個 `gpio_pin_config_t` 型態變數，分別用來配置 DHT11 的腳位為數位輸出模式和數位輸入模式。在初始化 DHT11 時，必須先設置為輸出模式來發送啟動訊號，隨後再切換為輸入模式來接收數據。
+```c
+gpio_pin_config_t USER_DHT_out_config = {
+    .direction = kGPIO_DigitalOutput,
+    .outputLogic = 1U,
+    .interruptMode = kGPIO_NoIntmode
+};
+
+gpio_pin_config_t USER_DHT_in_config = {
+    .direction = kGPIO_DigitalInput,
+    .outputLogic = 0U,
+    .interruptMode = kGPIO_NoIntmode
+};
+```
+
+- 首先把 DHT11 的腳位設定為輸出模式，然後拉低電壓持續 18 毫秒，這是啟動訊號。接著拉高電壓並延遲 40 微秒，然後把腳位切換為輸入模式，準備接收來自 DHT11 的數據。再來從 DHT11 讀取 5 個數據，分別存入 `data` 陣列。每個數據位是 8 位元，透過 `read_data_bit` 函數一個一個讀取。最後輸出 `data[0]`（濕度）和 `data[2]`（溫度），以便在 Debug Console 上查看讀取的結果。
+```c
+GPIO_PinInit(DHT11_GPIO, DHT11_GPIO_PIN, &USER_DHT_out_config);
+delayms(2000);
+GPIO_PinWrite(DHT11_GPIO,DHT11_GPIO_PIN,0);
+delayms(18);
+GPIO_PinWrite(DHT11_GPIO,DHT11_GPIO_PIN,1);
+delayus(40);
+GPIO_PinInit(DHT11_GPIO, DHT11_GPIO_PIN, &USER_DHT_in_config);
+delayus(180);
+
+uint8_t data[5] = {0};
+for(int i = 0; i < 5; i++)
+{
+    for(int j = 7; j >= 0; j--)
+    {
+        data[i] |= (read_data_bit() << j);
+    }
+}
+
+PRINTF("%d, %d\r\n",data[0],data[2]);
+```
+
 ### 使用 Wi-Fi 連接至網頁視覺化設計
 
 將網頁所使用到的 UI 介面，透過程式轉為 C 程式碼後存放於開發版中，並透過 IW416 Wi-Fi 模組連網後開啟網頁，即可在相同網域下透過手機連線至開發板。
