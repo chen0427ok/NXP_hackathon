@@ -360,4 +360,4 @@ int suggest(double *input)
     改用隨機森林演算法訓練 AI 模型，並且使用 `m2cgen` 套件將模型轉換為 C 程式碼。
 
 ## 成果展示
-- [Google 簡報]()
+- [Google 簡報](https://docs.google.com/presentation/d/1FqnYzcU47q5OTvoHkY5QuwcqNwk68gpmtgvUb1G6Klk/edit?usp=sharing)
